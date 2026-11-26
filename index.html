@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eaf3ff" id="themeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ส่งงาน">
+<title>ระบบส่งงานนักเรียน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ===== Design tokens (พาสเทล) ===== */
+:root{
+  --bg:#f4f8ff; --surface:#ffffff; --surface2:#eef3fb; --text:#26314a; --muted:#66728c; --line:#dde5f2;
+  --blue:#cfe4ff; --blue-i:#2c5aa0; --lav:#e3dcff; --lav-i:#5a46a6; --mint:#d3f5e6; --mint-i:#1d7a55;
+  --peach:#ffe2d1; --peach-i:#a5532a; --pink:#ffd9e6; --pink-i:#a8305f; --cream:#fff4cc; --cream-i:#7a5f10;
+  --primary:#5b8def; --primary-i:#ffffff; --danger:#d6456f;
+  --r:16px; --sh:0 2px 10px rgba(60,80,120,.08);
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  --font:'Prompt','Noto Sans Thai','Sarabun',system-ui,sans-serif;
+  color-scheme:light;
+}
+:root[data-theme=dark]{
+  --bg:#141a2a; --surface:#1d2438; --surface2:#262e46; --text:#e8edf8; --muted:#a3aec7; --line:#323b57;
+  --blue:#25406b; --blue-i:#bcd8ff; --lav:#3a3470; --lav-i:#d5cdff; --mint:#1c4a3a; --mint-i:#a8ecce;
+  --peach:#5a3a28; --peach-i:#ffd2b8; --pink:#5b2b41; --pink-i:#ffc4da; --cream:#4f4420; --cream-i:#ffeaa0;
+  --primary:#7aa2ff; --primary-i:#10172a; --danger:#ff7b9f; --sh:0 2px 12px rgba(0,0,0,.35); color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:16px;line-height:1.55;overflow-x:hidden}
+h1,h2,h3{margin:0;font-weight:600;line-height:1.3} h1{font-size:1.5rem} h2{font-size:1.2rem} h3{font-size:1.02rem}
+p{margin:.25rem 0} a{color:var(--primary)} img{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.muted{color:var(--muted)} .small{font-size:.86rem} .center{text-align:center} .row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap} .sp{flex:1}
+.hide{display:none!important}
+
+/* ===== Layout: มือถือแนวตั้ง = bottom nav / จอกว้างหรือแนวนอน = rail ด้านข้าง ===== */
+.shell{min-height:100%;display:flex;flex-direction:column}
+main{flex:1;padding:calc(var(--sat) + 14px) calc(var(--sar) + 14px) calc(84px + var(--sab)) calc(var(--sal) + 14px);max-width:1100px;width:100%;margin:0 auto}
+.nav{position:fixed;z-index:20;left:0;right:0;bottom:0;display:flex;background:var(--surface);border-top:1px solid var(--line);
+  padding:4px calc(var(--sar) + 6px) calc(var(--sab) + 4px) calc(var(--sal) + 6px)}
+.nav button{flex:1;min-height:54px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:.72rem;color:var(--muted);border-radius:14px;cursor:pointer}
+.nav button.on{color:var(--blue-i);background:var(--blue)}
+@media (min-width:760px),(orientation:landscape) and (max-height:520px){
+  .nav{top:0;bottom:0;right:auto;width:84px;flex-direction:column;justify-content:flex-start;gap:6px;border-top:0;border-right:1px solid var(--line);
+    padding:calc(var(--sat) + 12px) 6px 12px calc(var(--sal) + 6px)}
+  .nav button{flex:none;min-height:60px}
+  main{padding:calc(var(--sat) + 18px) calc(var(--sar) + 20px) 28px calc(var(--sal) + 104px);max-width:none}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))!important}
+}
+.grid{display:grid;gap:12px;grid-template-columns:1fr}
+.grid.two{grid-template-columns:1fr 1fr}
+.cols{display:grid;gap:14px;grid-template-columns:1fr}
+@media (min-width:900px){.cols{grid-template-columns:1.3fr 1fr}}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem} th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--surface2);font-weight:600}
+
+/* ===== Components ===== */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
+.card.click{cursor:pointer;transition:transform .15s}.card.click:active{transform:scale(.985)}
+.stat{border-radius:var(--r);padding:12px 14px} .stat b{display:block;font-size:1.7rem;line-height:1.1}
+.s-submitted{background:var(--mint);color:var(--mint-i)} .s-pending{background:var(--peach);color:var(--peach-i)}
+.s-overdue{background:var(--pink);color:var(--pink-i)} .s-graded{background:var(--blue);color:var(--blue-i)}
+.s-lav{background:var(--lav);color:var(--lav-i)} .s-cream{background:var(--cream);color:var(--cream-i)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:500}
+.btn{min-height:44px;padding:0 18px;border-radius:14px;border:1px solid var(--line);background:var(--surface2);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:500;transition:transform .12s,opacity .12s}
+.btn:active{transform:scale(.97)} .btn[disabled]{opacity:.55;pointer-events:none}
+.btn.primary{background:var(--primary);color:var(--primary-i);border-color:transparent}
+.btn.danger{background:var(--pink);color:var(--pink-i);border-color:transparent}
+.btn.block{width:100%} .btn.sm{min-height:44px;padding:0 12px;font-size:.9rem}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px} .field label{font-size:.88rem;font-weight:500}
+.inp,select.inp,textarea.inp{min-height:46px;width:100%;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);}
+textarea.inp{min-height:84px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border-radius:99px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center}
+.chip.on{background:var(--lav);color:var(--lav-i);border-color:var(--lav-i)}
+.avatar{width:56px;height:56px;border-radius:50%;object-fit:cover;background:var(--lav);display:inline-flex;align-items:center;justify-content:center;color:var(--lav-i);font-weight:600;flex:none;overflow:hidden}
+.avatar.sm{width:42px;height:42px}
+.bar{height:10px;border-radius:9px;background:var(--surface2);overflow:hidden}.bar>i{display:block;height:100%;background:var(--mint-i);border-radius:9px;transition:width .5s}
+.ring{--p:0;width:84px;height:84px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:conic-gradient(var(--mint-i) calc(var(--p)*1%),var(--surface2) 0)}
+.ring span{width:64px;height:64px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-weight:600}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)} .empty svg{width:64px;height:64px;margin-bottom:8px;opacity:.8}
+.skel{border-radius:12px;background:linear-gradient(90deg,var(--surface2),var(--surface),var(--surface2));background-size:200% 100%;animation:sk 1.2s infinite;min-height:70px;margin-bottom:12px}
+@keyframes sk{to{background-position:-200% 0}}
+.banner{padding:10px 14px;border-radius:14px;margin-bottom:12px;display:flex;gap:8px;align-items:center}
+#offline{position:fixed;top:var(--sat);left:0;right:0;z-index:60;text-align:center;background:var(--cream);color:var(--cream-i);padding:6px;font-size:.85rem}
+#toasts{position:fixed;z-index:80;left:50%;transform:translateX(-50%);bottom:calc(92px + var(--sab));display:flex;flex-direction:column;gap:8px;width:min(92vw,420px);pointer-events:none}
+.toast{background:var(--text);color:var(--bg);padding:12px 16px;border-radius:14px;box-shadow:var(--sh);animation:up .25s}
+.toast.err{background:var(--danger);color:#fff}
+@keyframes up{from{opacity:0;transform:translateY(8px)}}
+.modal-bg{position:fixed;inset:0;z-index:70;background:rgba(15,20,40,.5);display:flex;align-items:flex-end;justify-content:center;
+  padding:var(--sat) var(--sar) 0 var(--sal)}
+.modal{background:var(--surface);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:18px 18px calc(18px + var(--sab));animation:up .25s}
+@media (min-width:640px){.modal-bg{align-items:center}.modal{border-radius:22px}}
+.progress{height:8px;background:var(--surface2);border-radius:8px;overflow:hidden;margin:8px 0}.progress>i{display:block;height:100%;width:0;background:var(--primary);transition:width .2s}
+#adminDot{position:fixed;z-index:50;width:22px;height:22px;border-radius:50%;background:var(--lav-i);opacity:.35;border:2px solid var(--surface);touch-action:none;cursor:grab;
+  display:grid;place-items:center;color:var(--surface);padding:0}
+#adminDot svg{width:12px;height:12px}
+#adminDot:hover,#adminDot:active{opacity:.9}
+.adminbar{display:flex;align-items:center;gap:8px;background:var(--lav);color:var(--lav-i);padding:8px 14px;border-radius:14px;margin-bottom:12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== พิมพ์ / PDF A4 ===== */
+.report-a4{width:794px;padding:40px;background:#fff;color:#111;font-family:'Sarabun','Noto Sans Thai',sans-serif;font-size:14px}
+@media print{
+  body{background:#fff}.nav,#adminDot,#toasts,.adminbar,.no-print{display:none!important}
+  main{padding:0!important;max-width:none}.card{box-shadow:none}
+  @page{size:A4;margin:14mm}
+}
+</style>
+</head>
+<body>
+<div id="offline" class="hide">ออฟไลน์ — แสดงข้อมูลที่บันทึกไว้ในเครื่อง</div>
+<div id="app"></div>
+<div id="toasts" aria-live="polite"></div>
+<div id="modalRoot"></div>
+<button id="adminDot" aria-label="แอดมิน"></button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script>
+"use strict";
+/* ============================================================
+   CORE (ส่วนที่ 1): ตั้งค่า, API, cache, UI helper, ธีม, PWA
+   ============================================================ */
+const API_URL = "วาง URL ของ Web App ที่นี่";
+const App = { token:null, role:null, info:null, student:{}, admin:{}, mem:{}, imgs:new Map() };
+const $ = (s,r=document)=>r.querySelector(s), $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+
+/* ---------- ยูทิลิตี้ ---------- */
+const esc = v => String(v==null?'':v).replace(/[&<>"'`]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c]));
+const TH_M = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function fmtDate(iso,withTime=true){
+  if(!iso) return '-'; const d=new Date(iso); if(isNaN(d)) return '-';
+  const t = withTime ? ' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' น.' : '';
+  return d.getDate()+' '+TH_M[d.getMonth()]+' '+(d.getFullYear()+543)+t;
+}
+function countdown(iso){
+  const ms = new Date(iso)-Date.now(), a=Math.abs(ms), d=Math.floor(a/864e5), h=Math.floor(a%864e5/36e5), m=Math.floor(a%36e5/6e4);
+  const txt = d? `${d} วัน ${h} ชม.` : h? `${h} ชม. ${m} นาที` : `${m} นาที`;
+  return ms<0 ? {late:true,text:'เลยกำหนด '+txt,urgent:false} : {late:false,text:'เหลือ '+txt,urgent:ms<864e5};
+}
+function toLocalInput(iso){ const d=iso?new Date(iso):new Date(Date.now()+864e5); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,16); }
+const fromLocalInput = v => new Date(v).toISOString();
+const initials = s => esc((s||'?').trim().charAt(0));
+function avatar(thumb,name,cls=''){ return thumb ? `<img class="avatar ${cls}" src="${esc(thumb)}" alt="">` : `<span class="avatar ${cls}">${initials(name)}</span>`; }
+
+/* ---------- ไอคอน inline SVG ---------- */
+const ICONS = {
+  home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  send:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', history:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', users:'<circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-3.5 3-5.5 7-5.5s7 2 7 5.5M17 4.5a3.5 3.5 0 0 1 0 7M22 20c0-2.5-1.5-4-4-4.8"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  door:'<path d="M5 21V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v17M3 21h18M15 12v.01"/>', cog:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>', x:'<path d="M18 6L6 18M6 6l12 12"/>', plus:'<path d="M12 5v14M5 12h14"/>',
+  camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>', trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/>',
+  edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',
+  bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>', logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>',
+  inbox:'<path d="M22 12h-6l-2 3h-4l-2-3H2M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>', up:'<path d="M12 19V5M5 12l7-7 7 7"/>', down:'<path d="M12 5v14M19 12l-7 7-7-7"/>'
+};
+const ic = (n,extra='') => `<svg class="i ${extra}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]||''}</svg>`;
+
+/* ---------- Toast / Modal / Confirm / กันกดซ้ำ ---------- */
+function toast(msg,err=false){
+  const el=document.createElement('div'); el.className='toast'+(err?' err':''); el.textContent=msg; $('#toasts').appendChild(el);
+  setTimeout(()=>el.remove(), err?4500:2600);
+}
+function modal(html,{onMount,dismissable=true}={}){
+  closeModal(); const bg=document.createElement('div'); bg.className='modal-bg';
+  bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}</div>`; $('#modalRoot').appendChild(bg);
+  if(dismissable) bg.addEventListener('mousedown',e=>{ if(e.target===bg) closeModal(); });
+  if(onMount) onMount($('.modal',bg)); return $('.modal',bg);
+}
+function closeModal(){ $('#modalRoot').innerHTML=''; }
+function confirmBox(title,text,okLabel='ยืนยัน',danger=false){
+  return new Promise(res=>{
+    const m=modal(`<h2>${esc(title)}</h2><p class="muted">${esc(text)}</p><div class="row" style="margin-top:16px;justify-content:flex-end">
+      <button class="btn" data-x="0">ยกเลิก</button><button class="btn ${danger?'danger':'primary'}" data-x="1">${esc(okLabel)}</button></div>`);
+    $$('[data-x]',m).forEach(b=>b.onclick=()=>{ closeModal(); res(b.dataset.x==='1'); });
+  });
+}
+/* กันกดซ้ำ: disable ปุ่มระหว่างรอ แล้วแสดงข้อผิดพลาดเป็น toast */
+async function busy(btn,fn){
+  if(btn.disabled) return; const old=btn.innerHTML; btn.disabled=true; btn.textContent='กำลังทำงาน…';
+  try{ return await fn(); }catch(e){ toast(e.message||'เกิดข้อผิดพลาด',true); }
+  finally{ btn.disabled=false; btn.innerHTML=old; }
+}
+const skeleton = (n=3)=>Array.from({length:n},()=>'<div class="skel"></div>').join('');
+const empty = (icon,title,sub='')=>`<div class="empty">${ic(icon)}<h3>${esc(title)}</h3><p>${esc(sub)}</p></div>`;
+
+/* ---------- API + cache (แสดงข้อมูลเก่าก่อน แล้วรีเฟรชเบื้องหลัง) ---------- */
+async function api(action,payload={},{auth=true}={}){
+  if(!API_URL || API_URL.indexOf('http')!==0) throw new Error('ยังไม่ได้ตั้งค่า API_URL ในไฟล์ index.html');
+  if(!navigator.onLine) throw new Error('ออฟไลน์อยู่ กรุณาเชื่อมต่ออินเทอร์เน็ต');
+  let r;
+  try{
+    r = await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action,token:auth?App.token:undefined,payload})});
+  }catch(e){ throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้'); }
+  let j; try{ j=await r.json(); }catch(e){ throw new Error('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง'); }
+  if(!j.ok){
+    if(/เข้าสู่ระบบใหม่|หมดอายุ/.test(j.error||'')){ logout(true); }
+    throw new Error(j.error||'เกิดข้อผิดพลาด');
+  }
+  return j.data;
+}
+const cKey = (a,p)=>'c:'+(App.role||'x')+':'+a+':'+JSON.stringify(p||{});
+function cacheGet(k){ if(App.mem[k]) return App.mem[k]; try{ const v=JSON.parse(localStorage.getItem(k)||'null'); if(v) App.mem[k]=v; return v; }catch(e){ return null; } }
+function cacheSet(k,v){ App.mem[k]=v; try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){ /* เต็ม: ข้าม */ } }
+/* swr: เรียก render(data,fromCache) ทันทีถ้ามี cache แล้วเรียกอีกครั้งเมื่อได้ข้อมูลใหม่ */
+async function swr(action,payload,render){
+  const k=cKey(action,payload), old=cacheGet(k); if(old) render(old,true);
+  try{ const d=await api(action,payload); cacheSet(k,d); render(d,false); return d; }
+  catch(e){ if(!old) throw e; toast(e.message+' (แสดงข้อมูลเก่า)',true); return old; }
+}
+function clearCache(){ App.mem={}; Object.keys(localStorage).filter(k=>k.startsWith('c:')).forEach(k=>localStorage.removeItem(k)); }
+
+/* รูป private: ขอ base64 ผ่าน getImage แล้วเก็บในหน่วยความจำ */
+async function privateImg(kind,id,index=0){
+  const k=kind+id+index; if(App.imgs.has(k)) return App.imgs.get(k);
+  const d=await api('getImage',{kind,id,index}); const u=`data:${d.mime};base64,${d.base64}`; App.imgs.set(k,u); return u;
+}
+
+/* ---------- ประมวลผลรูปฝั่ง client ---------- */
+function loadImage(file){
+  return new Promise((res,rej)=>{ const u=URL.createObjectURL(file), im=new Image();
+    im.onload=()=>{ URL.revokeObjectURL(u); res(im); }; im.onerror=()=>rej(new Error('เปิดรูปไม่ได้')); im.src=u; });
+}
+async function compressImage(file,maxSide=1600,q=.8){           // ส่งงาน: ด้านยาวสุด 1600px
+  const im=await loadImage(file), s=Math.min(1,maxSide/Math.max(im.width,im.height));
+  const c=document.createElement('canvas'); c.width=Math.round(im.width*s); c.height=Math.round(im.height*s);
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height); return c.toDataURL('image/jpeg',q);
+}
+async function squareImage(file,size=400,q=.85,zoom=1,ox=0,oy=0){ // โปรไฟล์: ครอปจัตุรัส (ปรับ zoom/เลื่อนได้)
+  const im=await loadImage(file), side=Math.min(im.width,im.height)/zoom;
+  const sx=Math.max(0,Math.min(im.width-side,(im.width-side)/2+ox*side)), sy=Math.max(0,Math.min(im.height-side,(im.height-side)/2+oy*side));
+  const c=document.createElement('canvas'); c.width=c.height=size; c.getContext('2d').drawImage(im,sx,sy,side,side,0,0,size,size);
+  return c.toDataURL('image/jpeg',q);
+}
+function shrinkDataUrl(dataUrl,size=96,q=.7){
+  return new Promise(res=>{ const im=new Image(); im.onload=()=>{ const c=document.createElement('canvas'); c.width=c.height=size;
+    c.getContext('2d').drawImage(im,0,0,size,size); res(c.toDataURL('image/jpeg',q)); }; im.src=dataUrl; });
+}
+
+/* ---------- ดาวน์โหลดไฟล์ / CSV (UTF-8 BOM) ---------- */
+function download(name,content,mime){
+  const blob=new Blob([content],{type:mime}), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+const csvCell = v => { v=String(v==null?'':v); if(/^[=+\-@]/.test(v)) v="'"+v; return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+const toCSV = rows => '\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
+
+/* ---------- ธีมสว่าง/มืด ---------- */
+function applyTheme(t){
+  const th = t || localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  document.documentElement.dataset.theme=th; $('#themeColor').content = th==='dark'?'#141a2a':'#eaf3ff'; return th;
+}
+function toggleTheme(){ const n=document.documentElement.dataset.theme==='dark'?'light':'dark'; localStorage.setItem('theme',n); applyTheme(n); return n; }
+matchMedia('(prefers-color-scheme:dark)').addEventListener?.('change',()=>{ if(!localStorage.getItem('theme')) applyTheme(); });
+
+/* ---------- Shell: เมนูล่าง/ด้านข้าง ---------- */
+function mountShell(tabs,active,onSelect,{banner=''}={}){
+  $('#app').innerHTML=`<div class="shell"><nav class="nav" aria-label="เมนูหลัก">${tabs.map(t=>
+    `<button data-t="${t.id}" class="${t.id===active?'on':''}">${ic(t.icon)}<span>${esc(t.label)}</span></button>`).join('')}</nav>
+    <main id="main" tabindex="-1">${banner}<div id="view"></div></main></div>`;
+  $$('.nav button').forEach(b=>b.onclick=()=>{ $$('.nav button').forEach(x=>x.classList.toggle('on',x===b)); onSelect(b.dataset.t); $('#main').scrollTo?.(0,0); scrollTo(0,0); });
+}
+const view = html => { $('#view').innerHTML=html; };
+
+/* ---------- ออกจากระบบ ---------- */
+function logout(silent){
+  if(App.role==='admin'){ sessionStorage.removeItem('adm'); location.reload(); return; }
+  localStorage.removeItem('auth'); sessionStorage.removeItem('auth'); App.token=null; App.role=null; clearCache(); App.imgs.clear();
+  if(!silent) toast('ออกจากระบบแล้ว'); App.student.authScreen ? App.student.authScreen() : location.reload();
+}
+function saveAuth(d,remember){ App.token=d.token; App.role=d.role; (remember?localStorage:sessionStorage).setItem('auth',JSON.stringify({token:d.token,role:d.role})); }
+function loadAuth(){ try{ const a=JSON.parse(localStorage.getItem('auth')||sessionStorage.getItem('auth')||'null'); if(a){ App.token=a.token; App.role=a.role; return true; } }catch(e){} return false; }
+
+/* ---------- ปุ่มแอดมิน (ลากย้ายได้) ---------- */
+function initAdminDot(){
+  const d=$('#adminDot'); d.innerHTML=ic('shield'); let pos; try{ pos=JSON.parse(localStorage.getItem('dotPos')); }catch(e){}
+  const place=(x,y)=>{ x=Math.max(4,Math.min(innerWidth-26,x)); y=Math.max(4,Math.min(innerHeight-26,y)); d.style.left=x+'px'; d.style.top=y+'px'; return {x,y}; };
+  place(pos?pos.x:innerWidth-30, pos?pos.y:innerHeight-120);
+  let sx,sy,ox,oy,moved=false;
+  d.addEventListener('pointerdown',e=>{ d.setPointerCapture(e.pointerId); sx=e.clientX; sy=e.clientY; ox=d.offsetLeft; oy=d.offsetTop; moved=false; });
+  d.addEventListener('pointermove',e=>{ if(sx==null) return; if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>6) moved=true; if(moved) place(ox+e.clientX-sx,oy+e.clientY-sy); });
+  d.addEventListener('pointerup',()=>{ if(sx==null) return; sx=null;
+    if(moved) localStorage.setItem('dotPos',JSON.stringify({x:d.offsetLeft,y:d.offsetTop}));
+    else if(App.admin.openLogin) App.admin.openLogin(); });
+  addEventListener('resize',()=>place(d.offsetLeft,d.offsetTop));
+}
+
+/* ---------- PWA: manifest + ไอคอนสร้างจาก canvas, ติดตั้ง, ออฟไลน์, แจ้งเตือน ---------- */
+function makeIcon(size,maskable){
+  const c=document.createElement('canvas'); c.width=c.height=size; const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,size,size); g.addColorStop(0,'#cfe4ff'); g.addColorStop(1,'#e3dcff'); x.fillStyle=g;
+  if(maskable) x.fillRect(0,0,size,size); else { x.beginPath(); x.roundRect(0,0,size,size,size*.22); x.fill(); }
+  const k=size*(maskable?.5:.6), o=(size-k)/2; x.fillStyle='#5b8def'; x.beginPath(); x.roundRect(o,o+k*.1,k,k*.8,k*.12); x.fill();
+  x.strokeStyle='#fff'; x.lineWidth=k*.1; x.lineCap='round'; x.lineJoin='round'; x.beginPath();
+  x.moveTo(o+k*.25,o+k*.52); x.lineTo(o+k*.45,o+k*.7); x.lineTo(o+k*.76,o+k*.33); x.stroke(); return c.toDataURL('image/png');
+}
+function setupPWA(){
+  try{
+    const i192=makeIcon(192), i512=makeIcon(512), m512=makeIcon(512,true);
+    const l=document.createElement('link'); l.rel='apple-touch-icon'; l.href=makeIcon(180); document.head.appendChild(l);
+    const man={name:'ระบบส่งงานนักเรียน',short_name:'ส่งงาน',start_url:location.pathname,scope:location.pathname.replace(/[^/]*$/,''),display:'standalone',
+      background_color:'#f4f8ff',theme_color:'#eaf3ff',lang:'th',icons:[{src:i192,sizes:'192x192',type:'image/png'},{src:i512,sizes:'512x512',type:'image/png'},
+      {src:m512,sizes:'512x512',type:'image/png',purpose:'maskable'}]};
+    const ml=document.createElement('link'); ml.rel='manifest'; ml.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'})); document.head.appendChild(ml);
+  }catch(e){ /* ไม่มี manifest ก็ยังใช้งานได้ */ }
+  if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));  // ใช้ไม่ได้ก็ไม่กระทบระบบ
+  const off=()=>$('#offline').classList.toggle('hide',navigator.onLine); addEventListener('online',off); addEventListener('offline',off); off();
+  addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); App.installEvt=e; document.dispatchEvent(new Event('installready')); });
+  addEventListener('appinstalled',()=>{ App.installEvt=null; toast('ติดตั้งแอปแล้ว'); });
+}
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent), isStandalone = matchMedia('(display-mode:standalone)').matches || navigator.standalone;
+async function installApp(){
+  if(isStandalone) return toast('ติดตั้งแอปไว้แล้ว');
+  if(App.installEvt){ App.installEvt.prompt(); await App.installEvt.userChoice; App.installEvt=null; }
+  else if(isIOS) modal(`<h2>ติดตั้งบน iPhone/iPad</h2><p>1. แตะปุ่ม <b>แชร์</b> ใน Safari<br>2. เลือก <b>เพิ่มลงในหน้าจอโฮม</b> (Add to Home Screen)<br>3. แตะ <b>เพิ่ม</b></p><button class="btn primary block" onclick="closeModal()">เข้าใจแล้ว</button>`);
+  else modal(`<h2>ติดตั้งแอป</h2><p>เปิดเมนูของเบราว์เซอร์แล้วเลือก <b>ติดตั้งแอป</b> หรือ <b>เพิ่มลงในหน้าจอหลัก</b></p><button class="btn primary block" onclick="closeModal()">ตกลง</button>`);
+}
+async function askNotify(){ if('Notification' in window && Notification.permission==='default'){ try{ await Notification.requestPermission(); }catch(e){} } }
+function notifyLocal(title,body){ try{ if('Notification' in window && Notification.permission==='granted') new Notification(title,{body,icon:makeIcon(192)}); }catch(e){} }
+
+/* ============================================================
+   STUDENT: สมัคร/ล็อกอิน, แดชบอร์ด, ส่งงาน, ประวัติ, เมนู/โปรไฟล์
+   ============================================================ */
+(function(){
+const S=App.student; let home=null, tab='home'; S.f={ys:'',st:'',sub:'',q:''};
+const css=document.createElement('style');
+css.textContent=`.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.th{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--surface2)}
+.th img{width:100%;height:100%;object-fit:cover}.th .tb{position:absolute;left:0;right:0;bottom:0;display:flex;background:rgba(0,0,0,.5)}
+.th .tb button{flex:1;min-height:44px;border:0;background:none;color:#fff;cursor:pointer;font-size:1.1rem}
+.seg{display:flex;background:var(--surface2);border-radius:14px;padding:4px;margin-bottom:14px}.seg button{flex:1;min-height:44px;border:0;border-radius:11px;background:none;cursor:pointer;font-weight:500}
+.seg button.on{background:var(--surface);box-shadow:var(--sh)}.pre{white-space:pre-wrap;word-break:break-word}.photo{width:100%;border-radius:12px;margin-bottom:8px}`;
+document.head.appendChild(css);
+const F=(id,label,html)=>`<div class="field"><label for="${id}">${label}</label>${html}</div>`;
+const inp=(id,type='text',x='')=>`<input class="inp" id="${id}" type="${type}" ${x}>`;
+const stBadge=h=>h.status==='graded'?'<span class="badge s-graded">ตรวจแล้ว</span>':h.isLate?'<span class="badge s-overdue">ส่งช้า</span>':'<span class="badge s-submitted">ส่งแล้ว</span>';
+const navTo=t=>{ $$('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t)); S.go(t); };
+async function pickProfile(file){ const full=await squareImage(file,400); return {full,thumb:await shrinkDataUrl(full,96)}; }
+
+/* ---------- สมัคร / ล็อกอิน ---------- */
+S.authScreen=function(mode){
+  const q=new URLSearchParams(location.search).get('room'); mode=mode||(q?'reg':'login');
+  const rooms=(App.info&&App.info.openRooms)||[];
+  $('#app').innerHTML=`<main style="max-width:480px;padding-bottom:30px"><div class="center" style="margin:10px 0 18px">${ic('book')}
+    <h1>${esc((App.info&&App.info.schoolName)||'ระบบส่งงานนักเรียน')}</h1><p class="muted">ส่งงานง่าย ๆ ผ่านมือถือ</p></div>
+    <div class="seg"><button data-m="login" class="${mode==='login'?'on':''}">เข้าสู่ระบบ</button><button data-m="reg" class="${mode==='reg'?'on':''}">สมัครสมาชิก</button></div>
+    <div class="card" id="authBox"></div></main>`;
+  $$('.seg button').forEach(b=>b.onclick=()=>S.authScreen(b.dataset.m));
+  mode==='login'?loginForm():regForm(rooms,q);
+};
+function loginForm(){
+  $('#authBox').innerHTML=F('lid','รหัสนักเรียน (4 หลัก)',inp('lid','text','inputmode="numeric" maxlength="4" autocomplete="username"'))
+   +F('lpin','PIN (4-6 หลัก)',inp('lpin','password','inputmode="numeric" maxlength="6" autocomplete="current-password"'))
+   +`<label class="row" style="min-height:44px"><input type="checkbox" id="lrem" checked style="width:22px;height:22px"> จดจำฉัน</label><button class="btn primary block" id="lgo">เข้าสู่ระบบ</button>`;
+  const go=$('#lgo'); go.onclick=()=>busy(go,async()=>{
+    const d=await api('login',{studentId:$('#lid').value.trim(),pin:$('#lpin').value,remember:$('#lrem').checked},{auth:false});
+    saveAuth(d,$('#lrem').checked); S.start(); });
+  $('#lpin').onkeydown=e=>{ if(e.key==='Enter') go.click(); };
+}
+function regForm(rooms,q){
+  let photo='',thumb='';
+  const opts=rooms.length?rooms.map(r=>`<option ${r===q?'selected':''}>${esc(r)}</option>`).join(''):'<option value="">ยังไม่มีห้องที่เปิดรับสมัคร</option>';
+  $('#authBox').innerHTML=`<div class="row" style="margin-bottom:12px"><span id="pp" class="avatar">${ic('user')}</span>
+    <button class="btn sm" id="pcam">${ic('camera')} ถ่ายรูป</button><button class="btn sm" id="pgal">${ic('image')} เลือกรูป</button></div>
+    <input type="file" id="fcam" accept="image/*" capture="user" hidden><input type="file" id="fgal" accept="image/*" hidden>`
+   +F('rid','รหัสนักเรียน (4 หลัก)',inp('rid','text','inputmode="numeric" maxlength="4"'))
+   +`<div class="grid two">${F('rfn','ชื่อ',inp('rfn','text','maxlength="60"'))}${F('rln','นามสกุล',inp('rln','text','maxlength="60"'))}</div>`
+   +F('rnn','ชื่อเล่น',inp('rnn','text','maxlength="30"'))
+   +`<div class="grid two">${F('rroom','ห้อง',`<select class="inp" id="rroom">${opts}</select>`)}${F('rnum','เลขที่',inp('rnum','number','min="1" max="99" inputmode="numeric"'))}</div>`
+   +F('rpin','PIN (4-6 หลัก)',inp('rpin','password','inputmode="numeric" maxlength="6" autocomplete="new-password"'))
+   +F('rpin2','ยืนยัน PIN',inp('rpin2','password','inputmode="numeric" maxlength="6" autocomplete="new-password"'))
+   +`<button class="btn primary block" id="rgo">สมัครสมาชิก</button>`;
+  const onFile=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
+    try{ const r=await pickProfile(f); photo=r.full; thumb=r.thumb; $('#pp').outerHTML=`<img id="pp" class="avatar" src="${thumb}" alt="">`; }catch(x){ toast(x.message,true); } };
+  $('#pcam').onclick=()=>$('#fcam').click(); $('#pgal').onclick=()=>$('#fgal').click(); $('#fcam').onchange=onFile; $('#fgal').onchange=onFile;
+  const go=$('#rgo'); go.onclick=()=>busy(go,async()=>{
+    const v=id=>$('#'+id).value.trim();
+    if($('#rpin').value!==$('#rpin2').value) throw new Error('PIN ยืนยันไม่ตรงกัน');
+    const d=await api('register',{studentId:v('rid'),firstName:v('rfn'),lastName:v('rln'),nickname:v('rnn'),roomId:$('#rroom').value,
+      number:v('rnum'),pin:$('#rpin').value,pin2:$('#rpin2').value,photo,photoThumb:thumb},{auth:false});
+    saveAuth(d,true); toast('สมัครสำเร็จ ยินดีต้อนรับ'); S.start(); });
+}
+
+/* ---------- Shell ---------- */
+S.start=function(){
+  mountShell([{id:'home',icon:'home',label:'หน้าหลัก'},{id:'submit',icon:'send',label:'ส่งงาน'},{id:'history',icon:'history',label:'ประวัติ'},{id:'menu',icon:'user',label:'เมนู'}],tab,S.go);
+  S.go(tab); askNotify();
+  if(!S.timer) S.timer=setInterval(()=>$$('[data-cd]').forEach(e=>e.textContent=countdown(e.dataset.cd).text),30000);
+};
+S.go=async function(t){
+  tab=t; view(skeleton(4));
+  try{ await ({home:homeV,submit:submitV,history:histV,menu:menuV})[t](); }
+  catch(e){ view(`<div class="card">${empty('inbox','โหลดข้อมูลไม่ได้',e.message)}<button class="btn block" onclick="App.student.go('${t}')">ลองใหม่</button></div>`); }
+};
+
+/* ---------- หน้า 1 แดชบอร์ด ---------- */
+async function homeV(){
+  await swr('getHome',{},(d,cached)=>{
+    if(tab!=='home') return; home=d; const s=d.stats,p=d.profile;
+    view(`<div class="row" style="margin-bottom:14px">${avatar(p.photoThumb,p.nickname)}<div><h1>สวัสดี ${esc(p.nickname)}</h1>
+      <p class="muted">ห้อง ${esc(p.roomId)} เลขที่ ${esc(p.number)} · ปีการศึกษา ${esc(d.settings.academicYear)}/${esc(d.settings.semester)}</p></div></div>
+      ${d.dueSoon?`<div class="banner s-pending">${ic('bell')}<b>มี ${d.dueSoon} งานที่ต้องส่งภายใน 24 ชั่วโมง</b></div>`:''}
+      <div class="card row" style="margin-bottom:12px"><div class="ring" style="--p:${s.percent}"><span>${s.percent}%</span></div>
+        <div><h3>ความสำเร็จ</h3><p class="muted">ส่งแล้ว ${s.submitted} จาก ${s.total} งาน</p><p>คะแนนเฉลี่ย <b>${s.avgPercent==null?'-':s.avgPercent+'%'}</b></p></div></div>
+      <div class="grid two" style="margin-bottom:14px">
+        <div class="stat s-submitted"><b>${s.submitted}</b>ส่งแล้ว</div><div class="stat s-pending"><b>${s.pending}</b>ค้างส่ง</div>
+        <div class="stat s-overdue"><b>${s.overdue}</b>เลยกำหนด</div><div class="stat s-graded"><b>${s.graded}</b>ตรวจแล้ว</div></div>
+      <div class="cols"><section><h2 style="margin-bottom:8px">งานใกล้ครบกำหนด</h2>${d.upcoming.length?d.upcoming.map(u=>{ const c=countdown(u.deadline);
+        return `<div class="card click" data-go style="margin-bottom:8px"><div class="row"><div class="sp"><h3>${esc(u.title)}</h3><p class="muted small">${esc(u.subject)} · ${fmtDate(u.deadline)}</p></div>
+        <span class="badge ${c.late?'s-overdue':c.urgent?'s-pending':'s-cream'}" data-cd="${esc(u.deadline)}">${c.text}</span></div></div>`; }).join(''):empty('check','ไม่มีงานค้าง','เยี่ยมมาก! ตอนนี้ส่งครบแล้ว')}</section>
+      <section><h2 style="margin-bottom:8px">ประกาศจากครู</h2>${d.announcements.length?d.announcements.map(a=>`<div class="card" style="margin-bottom:8px">
+        <div class="row"><h3 class="sp">${esc(a.title)}</h3>${a.pinned?'<span class="badge s-lav">ปักหมุด</span>':''}</div><p class="pre small">${esc(a.body)}</p>
+        <p class="muted small">${fmtDate(a.createdAt,false)}</p></div>`).join(''):empty('bell','ยังไม่มีประกาศ')}</section></div>`);
+    $$('[data-go]').forEach(e=>e.onclick=()=>navTo('submit'));
+    if(!cached && d.dueSoon && !S.notified){ S.notified=1; notifyLocal('งานใกล้ครบกำหนด','มี '+d.dueSoon+' งานที่ต้องส่งภายใน 24 ชั่วโมง'); }
+  });
+}
+
+/* ---------- หน้า 2 ส่งงาน ---------- */
+async function submitV(){
+  await swr('getAssignments',{},d=>{
+    if(tab!=='submit') return;
+    const card=a=>{ const s=a.submission;
+      const badge=s?stBadge(s):a.late?'<span class="badge s-overdue">เลยกำหนด</span>':'<span class="badge s-pending">ยังไม่ส่ง</span>', c=countdown(a.deadline);
+      return `<div class="card"><div class="row"><h3 class="sp">${esc(a.title)}</h3>${badge}</div>
+        <p class="muted small">${esc(a.subject)} · คะแนนเต็ม ${a.maxScore}</p><p class="small pre">${esc(a.description)}</p>
+        <p class="small">กำหนดส่ง ${fmtDate(a.deadline)} <span class="badge ${c.late?'s-overdue':c.urgent?'s-pending':'s-cream'}" data-cd="${esc(a.deadline)}">${c.text}</span></p>
+        ${s&&s.status==='graded'?`<p class="small">คะแนน <b>${s.score}/${a.maxScore}</b></p>`:''}
+        <div class="row" style="margin-top:10px">${a.canEdit?`<button class="btn primary sm" data-o="${a.openingId}">${s?'แก้ไขการส่ง':'ส่งงาน'}</button>`:''}
+        ${s?`<button class="btn sm" data-v="${s.submissionId}" data-n="${s.fileCount}">ดูรูปที่ส่ง</button>`:''}</div></div>`; };
+    view(`<h1 style="margin-bottom:12px">ส่งงาน</h1>`+(d.length?`<div class="grid">${d.map(card).join('')}</div>`:empty('inbox','ยังไม่มีงานให้ส่ง','ครูยังไม่ได้เปิดรับงาน พักผ่อนก่อนนะ')));
+    $$('[data-o]').forEach(b=>b.onclick=()=>S.openSubmit(d.find(x=>x.openingId===b.dataset.o)));
+    $$('[data-v]').forEach(b=>b.onclick=()=>S.viewImages(b.dataset.v,+b.dataset.n));
+  });
+}
+S.viewImages=function(id,n){
+  const m=modal(`<h2>รูปที่ส่ง</h2>${n?Array.from({length:n},(_,i)=>`<div class="skel" id="vi${i}"></div>`).join(''):'<p class="muted">ไม่มีรูป (ส่งเฉพาะหมายเหตุ)</p>'}
+    <button class="btn block" onclick="closeModal()">ปิด</button>`);
+  for(let i=0;i<n;i++) privateImg('submission',id,i).then(u=>{ const el=$('#vi'+i,m); if(el) el.outerHTML=`<img class="photo" src="${u}" alt="รูปที่ ${i+1}">`; }).catch(e=>{ const el=$('#vi'+i,m); if(el) el.outerHTML=`<p class="muted">${esc(e.message)}</p>`; });
+};
+S.openSubmit=function(a){
+  const sub=a.submission; let keep=sub?Array.from({length:sub.fileCount},(_,i)=>i):[], fresh=[];
+  const m=modal(`<h2>${esc(a.title)}</h2><p class="muted small">${esc(a.subject)} · คะแนนเต็ม ${a.maxScore} · ส่งภายใน ${fmtDate(a.deadline)}</p>
+    ${a.late?'<div class="banner s-overdue small">เลยกำหนดแล้ว ส่งได้ แต่จะติดป้าย "ส่งช้า"</div>':''}
+    <div class="row"><button class="btn sm" id="bc">${ic('camera')} ถ่ายรูป</button><button class="btn sm" id="bg">${ic('image')} เลือกรูปจากเครื่อง</button></div>
+    <div class="thumbs" id="th"></div><p class="muted small" id="cnt"></p><div class="progress hide" id="pg"><i></i></div>
+    <div class="field"><label for="nt">หมายเหตุ</label><textarea class="inp" id="nt" maxlength="500">${esc(sub?sub.note:'')}</textarea></div>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="bx">ยกเลิก</button><button class="btn primary" id="bs">${sub?'บันทึกการแก้ไข':'ส่งงาน'}</button></div>
+    <input type="file" id="fc" accept="image/*" capture="environment" hidden><input type="file" id="fg" accept="image/*" multiple hidden>`);
+  const draw=()=>{
+    $('#th',m).innerHTML=keep.map((k,j)=>`<div class="th"><img data-k="${k}" alt=""><div class="tb"><button data-rk="${j}" aria-label="ลบรูป">✕</button></div></div>`).join('')
+      +fresh.map((u,j)=>`<div class="th"><img src="${u}" alt=""><div class="tb"><button data-l="${j}" aria-label="เลื่อนไปก่อน">‹</button><button data-rf="${j}" aria-label="ลบรูป">✕</button><button data-r="${j}" aria-label="เลื่อนไปหลัง">›</button></div></div>`).join('');
+    $$('img[data-k]',m).forEach(im=>privateImg('submission',sub.submissionId,+im.dataset.k).then(u=>im.src=u).catch(()=>{}));
+    $('#cnt',m).textContent=`แนบแล้ว ${keep.length+fresh.length}/5 รูป`; };
+  $('#th',m).onclick=e=>{ const b=e.target.closest('button'); if(!b) return; const d=b.dataset, sw=(i,j)=>{ [fresh[i],fresh[j]]=[fresh[j],fresh[i]]; };
+    if(d.rk!==undefined) keep.splice(+d.rk,1); else if(d.rf!==undefined) fresh.splice(+d.rf,1);
+    else if(d.l!==undefined&&+d.l>0) sw(+d.l,+d.l-1); else if(d.r!==undefined&&+d.r<fresh.length-1) sw(+d.r,+d.r+1); draw(); };
+  const bar=p=>{ const pg=$('#pg',m); pg.classList.toggle('hide',p<=0||p>=100); $('i',pg).style.width=p+'%'; };
+  const add=async files=>{ let n=0; for(const f of files){
+      if(keep.length+fresh.length>=5){ toast('แนบได้สูงสุด 5 รูป',true); break; }
+      bar(Math.max(5,Math.round(n/files.length*100))); try{ fresh.push(await compressImage(f,1600,.8)); }catch(e){ toast(e.message,true); } n++; draw(); }
+    bar(0); };
+  $('#bc',m).onclick=()=>$('#fc',m).click(); $('#bg',m).onclick=()=>$('#fg',m).click();
+  $('#fc',m).onchange=e=>{ add([...e.target.files]); e.target.value=''; }; $('#fg',m).onchange=e=>{ add([...e.target.files]); e.target.value=''; };
+  $('#bx',m).onclick=closeModal; draw();
+  const bs=$('#bs',m); bs.onclick=()=>busy(bs,async()=>{
+    const note=$('#nt',m).value.trim(); if(!keep.length&&!fresh.length&&!note) throw new Error('กรุณาแนบรูปหรือพิมพ์หมายเหตุ');
+    bar(90); let r; try{ r=await api('submitWork',{openingId:a.openingId,note,images:fresh,keepIndexes:keep}); } finally{ bar(0); }
+    closeModal(); App.imgs.clear(); clearCache(); toast(r.late?'ส่งแล้ว (ติดป้ายส่งช้า)':'ส่งงานสำเร็จ'); S.go('submit'); });
+};
+
+/* ---------- หน้า 3 ประวัติ ---------- */
+async function histV(){ await swr('getHistory',{},d=>{ if(tab!=='history') return; histDraw(d); }); }
+function histDraw(all){
+  const f=S.f, uniq=k=>[...new Set(all.map(k))].filter(Boolean).sort();
+  const opt=(arr,cur,all0)=>`<option value="">${all0}</option>`+arr.map(x=>`<option ${x===cur?'selected':''}>${esc(x)}</option>`).join('');
+  view(`<h1 style="margin-bottom:12px">ประวัติการส่งงาน</h1><div class="grid two" style="margin-bottom:12px">
+    <select class="inp" id="fy">${opt(uniq(h=>h.academicYear+'/'+h.semester),f.ys,'ทุกปี/ภาคเรียน')}</select>
+    <select class="inp" id="fs"><option value="">ทุกสถานะ</option>${[['graded','ตรวจแล้ว'],['submitted','รอตรวจ'],['late','ส่งช้า']].map(x=>`<option value="${x[0]}" ${f.st===x[0]?'selected':''}>${x[1]}</option>`).join('')}</select>
+    <select class="inp" id="fj">${opt(uniq(h=>h.subject),f.sub,'ทุกวิชา')}</select>
+    <input class="inp" id="fq" type="search" placeholder="ค้นหาชื่องาน" value="${esc(f.q)}"></div><div id="hl"></div>`);
+  const fill=()=>{
+    const q=f.q.toLowerCase(), list=all.filter(h=>(!f.ys||h.academicYear+'/'+h.semester===f.ys)&&(!f.sub||h.subject===f.sub)&&(!q||(h.title||'').toLowerCase().includes(q))
+      &&(!f.st||(f.st==='graded'?h.status==='graded':f.st==='late'?h.isLate:h.status!=='graded')));
+    $('#hl').innerHTML=list.length?`<div class="grid">${list.map(h=>`<div class="card"><div class="row"><h3 class="sp">${esc(h.title)}</h3>${stBadge(h)}</div>
+      <p class="muted small">${esc(h.subject)} · ส่งเมื่อ ${fmtDate(h.submittedAt)}</p>
+      ${h.status==='graded'?`<p>คะแนน <b>${h.score}/${h.maxScore}</b></p>`:''}${h.comment?`<p class="small pre"><b>ครู:</b> ${esc(h.comment)}</p>`:''}
+      ${h.note?`<p class="small pre muted">หมายเหตุ: ${esc(h.note)}</p>`:''}
+      ${h.fileCount?`<button class="btn sm" data-v="${h.submissionId}" data-n="${h.fileCount}" style="margin-top:8px">ดูรูป (${h.fileCount})</button>`:''}</div>`).join('')}</div>`
+      :empty('history','ไม่พบประวัติ','ลองเปลี่ยนตัวกรอง หรือส่งงานชิ้นแรกได้เลย');
+    $$('[data-v]',$('#hl')).forEach(b=>b.onclick=()=>S.viewImages(b.dataset.v,+b.dataset.n)); };
+  $('#fy').onchange=e=>{ f.ys=e.target.value; fill(); }; $('#fs').onchange=e=>{ f.st=e.target.value; fill(); };
+  $('#fj').onchange=e=>{ f.sub=e.target.value; fill(); }; $('#fq').oninput=e=>{ f.q=e.target.value; fill(); }; fill();
+}
+
+/* ---------- เมนู / โปรไฟล์ ---------- */
+async function menuV(){
+  await swr('getHome',{},d=>{
+    if(tab!=='menu') return; home=d; const p=d.profile, dark=document.documentElement.dataset.theme==='dark';
+    view(`<h1 style="margin-bottom:12px">เมนู</h1><div class="card center" style="margin-bottom:12px"><span style="display:inline-block">${avatar(p.photoThumb,p.nickname).replace('class="avatar','class="avatar" style="width:84px;height:84px;font-size:2rem" data-x="')}</span>
+      <h2>${esc(p.nickname)}</h2><p>${esc(p.firstName)} ${esc(p.lastName)}</p><p class="muted small">รหัส ${esc(p.studentId)} · ห้อง ${esc(p.roomId)} เลขที่ ${esc(p.number)}</p></div>
+      <div class="grid" style="margin-bottom:12px"><button class="btn" id="mpin">${ic('shield')} เปลี่ยน PIN</button><button class="btn" id="mpho">${ic('camera')} เปลี่ยนรูปโปรไฟล์</button>
+      <button class="btn" id="mth">${ic(dark?'sun':'moon')} โหมด${dark?'สว่าง':'มืด'}</button>${isStandalone?'':`<button class="btn" id="mins">${ic('download')} ติดตั้งแอป</button>`}</div>
+      ${d.links.length?`<h2 style="margin-bottom:8px">ลิงก์ที่เกี่ยวข้อง</h2><div class="grid" style="margin-bottom:12px">${d.links.map(l=>`<a class="btn" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${ic(ICONS[l.icon]?l.icon:'link')} ${esc(l.title)}</a>`).join('')}</div>`:''}
+      <button class="btn danger block" id="mout">${ic('logout')} ออกจากระบบ</button><input type="file" id="mf" accept="image/*" hidden>`);
+    $('#mpin').onclick=pinModal; $('#mpho').onclick=()=>$('#mf').click(); $('#mout').onclick=()=>logout();
+    $('#mth').onclick=()=>{ toggleTheme(); menuV(); }; if($('#mins')) $('#mins').onclick=installApp;
+    $('#mf').onchange=async e=>{ const f=e.target.files[0]; e.target.value=''; if(!f) return;
+      try{ const r=await pickProfile(f); await api('changePhoto',{photo:r.full,photoThumb:r.thumb}); clearCache(); App.imgs.clear(); toast('เปลี่ยนรูปแล้ว'); S.go('menu'); }catch(x){ toast(x.message,true); } };
+  });
+}
+function pinModal(){
+  const m=modal(`<h2>เปลี่ยน PIN</h2>${F('po','PIN เดิม',inp('po','password','inputmode="numeric" maxlength="6"'))}${F('pn','PIN ใหม่ (4-6 หลัก)',inp('pn','password','inputmode="numeric" maxlength="6"'))}
+    ${F('pc','ยืนยัน PIN ใหม่',inp('pc','password','inputmode="numeric" maxlength="6"'))}<div class="row" style="justify-content:flex-end"><button class="btn" id="px">ยกเลิก</button><button class="btn primary" id="ps">บันทึก</button></div>`);
+  $('#px',m).onclick=closeModal; const b=$('#ps',m);
+  b.onclick=()=>busy(b,async()=>{ if($('#pn',m).value!==$('#pc',m).value) throw new Error('PIN ใหม่ไม่ตรงกัน');
+    await api('changePin',{oldPin:$('#po',m).value,newPin:$('#pn',m).value}); closeModal(); toast('เปลี่ยน PIN แล้ว'); });
+}
+})();
+
+/* ============================================================
+   ADMIN (ส่วน A): ล็อกอิน, shell, แดชบอร์ด, เปิดรับงาน, ติดตาม, ตรวจงาน
+   ============================================================ */
+(function(){
+const A=App.admin; let tab='dash'; A.V=A.V||{}; A.f={y:'',s:''};
+const F=(id,label,html)=>`<div class="field"><label for="${id}">${label}</label>${html}</div>`;
+const inp=(id,type='text',x='')=>`<input class="inp" id="${id}" type="${type}" ${x}>`;
+const dot=$('#adminDot');
+
+/* ----- เข้า/ออกโหมดแอดมิน (เก็บ token ไว้ใน sessionStorage แยกจากนักเรียน) ----- */
+A.openLogin=function(){
+  if(App.role==='admin') return;
+  const m=modal(`<h2>เข้าสู่ระบบแอดมิน</h2>${F('ap','รหัสผ่านแอดมิน',inp('ap','password','autocomplete="current-password"'))}
+    <label class="row" style="min-height:44px"><input type="checkbox" id="ar" style="width:22px;height:22px"> จดจำบนอุปกรณ์นี้ 7 วัน</label>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="ax">ยกเลิก</button><button class="btn primary" id="ag">เข้าสู่ระบบ</button></div>`);
+  $('#ax',m).onclick=closeModal; const g=$('#ag',m); $('#ap',m).focus(); $('#ap',m).onkeydown=e=>{ if(e.key==='Enter') g.click(); };
+  g.onclick=()=>busy(g,async()=>{ const d=await api('adminLogin',{password:$('#ap',m).value,remember:$('#ar',m).checked},{auth:false});
+    closeModal(); App.token=d.token; App.role='admin'; sessionStorage.setItem('adm',d.token); clearCache(); A.start(); });
+};
+A.exit=function(){ sessionStorage.removeItem('adm'); clearCache(); App.imgs.clear(); location.reload(); };
+A.start=function(){
+  dot.classList.add('hide');
+  mountShell([{id:'dash',icon:'grid',label:'ภาพรวม'},{id:'open',icon:'send',label:'เปิดรับงาน'},{id:'rooms',icon:'door',label:'ห้องเรียน'},{id:'set',icon:'cog',label:'ตั้งค่า'}],tab,A.go,
+    {banner:`<div class="adminbar no-print">${ic('shield')}<b class="sp">โหมดแอดมิน</b><button class="btn sm" id="aout">${ic('logout')} ออก</button></div>`});
+  $('#aout').onclick=A.exit; A.go(tab);
+};
+A.go=async function(t){
+  tab=t; view(skeleton(4));
+  try{ if(!A.V[t]) return view(empty('inbox','หน้านี้ยังไม่ถูกเพิ่ม','วางโค้ดแอดมินส่วนถัดไป')); await A.V[t](); }
+  catch(e){ view(`<div class="card">${empty('inbox','โหลดข้อมูลไม่ได้',e.message)}<button class="btn block" onclick="App.admin.go('${t}')">ลองใหม่</button></div>`); }
+};
+A.tab=()=>tab;
+A.F=F; A.inp=inp;
+const wr=()=>clearCache();   // เรียกหลังเขียนข้อมูลทุกครั้ง
+
+/* ----- กราฟ SVG ----- */
+function barChart(rooms){
+  const W=Math.max(300,rooms.length*72+20), H=190;
+  return `<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,300)}px;max-height:230px" role="img" aria-label="กราฟอัตราส่งงานรายห้อง">
+    <line x1="10" y1="150" x2="${W-10}" y2="150" style="stroke:var(--line)"/>${rooms.map((r,i)=>{ const h=Math.round(r.percent/100*115), x=i*72+24;
+    return `<rect x="${x}" y="${150-h}" width="40" height="${h}" rx="8" style="fill:var(--primary)"/><text x="${x+20}" y="${144-h}" text-anchor="middle" font-size="13" style="fill:var(--text)">${r.percent}%</text>
+      <text x="${x+20}" y="172" text-anchor="middle" font-size="13" style="fill:var(--muted)">${esc(r.roomId)}</text>`; }).join('')}</svg></div>`;
+}
+function donut(p){ const c=2*Math.PI*40;
+  return `<svg viewBox="0 0 100 100" width="120" height="120" role="img" aria-label="อัตราส่งงานรวม ${p}%"><circle cx="50" cy="50" r="40" fill="none" stroke-width="14" style="stroke:var(--surface2)"/>
+    <circle cx="50" cy="50" r="40" fill="none" stroke-width="14" stroke-linecap="round" stroke-dasharray="${(c*p/100).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 50 50)" style="stroke:var(--mint-i)"/>
+    <text x="50" y="57" text-anchor="middle" font-size="20" font-weight="600" style="fill:var(--text)">${p}%</text></svg>`;
+}
+
+/* ----- หน้า 1 แดชบอร์ด ----- */
+A.V.dash=async()=>{
+  await swr('adminDashboard',{academicYear:A.f.y,semester:A.f.s},(d,c)=>{
+    if(tab!=='dash') return; A.dash=d;
+    view(`<h1 style="margin-bottom:12px">ภาพรวม</h1><div class="row no-print" style="margin-bottom:12px"><div class="field" style="margin:0;width:120px"><label for="dy">ปีการศึกษา</label>${inp('dy','text','inputmode="numeric" maxlength="4" value="'+esc(d.academicYear)+'"')}</div>
+      <div class="field" style="margin:0;width:100px"><label for="ds">ภาคเรียน</label>${inp('ds','text','maxlength="1" value="'+esc(d.semester)+'"')}</div><button class="btn" id="dgo" style="align-self:flex-end">แสดง</button><span class="sp"></span>
+      <button class="btn sm" id="dcsv" style="align-self:flex-end">${ic('download')} CSV</button><button class="btn sm" id="dpdf" style="align-self:flex-end">${ic('download')} PDF</button></div>
+      <div class="grid two" style="margin-bottom:12px"><div class="stat s-lav"><b>${d.totalStudents}</b>นักเรียนทั้งหมด</div><div class="stat s-cream"><b>${d.totalAssignments}</b>งานที่สั่งทั้งหมด</div></div>
+      <div class="cols"><div class="card row"><div>${donut(d.percent)}</div><div><h3>อัตราการส่งงานรวม</h3><p class="muted small">ส่งแล้ว ${d.submitted} จาก ${d.expected} รายการ</p></div></div>
+      <div class="card"><h3>อัตราส่งรายห้อง</h3>${d.rooms.length?barChart(d.rooms):empty('door','ยังไม่มีห้อง')}</div></div>
+      <h2 style="margin:16px 0 8px">รายห้อง</h2><div class="grid">${d.rooms.map(r=>`<div class="card"><div class="row"><h3 class="sp">ห้อง ${esc(r.roomId)}</h3>${r.isOpen?'':'<span class="badge s-pending">ปิดสมัคร</span>'}</div>
+        <p class="muted small">นักเรียน ${r.students} คน · งานที่เปิด ${r.openings} งาน</p><div class="bar" style="margin:8px 0"><i style="width:${r.percent}%"></i></div><p class="small">อัตราส่ง <b>${r.percent}%</b> (${r.submitted}/${r.expected})</p></div>`).join('')}</div>`);
+    $('#dgo').onclick=()=>{ A.f.y=$('#dy').value.trim(); A.f.s=$('#ds').value.trim(); A.go('dash'); };
+    $('#dcsv').onclick=()=>{ const rows=[['ปีการศึกษา',d.academicYear,'ภาคเรียน',d.semester],['ห้อง','จำนวนนักเรียน','งานที่เปิด','ส่งแล้ว','ที่ควรส่ง','อัตราส่ง (%)']]
+      .concat(d.rooms.map(r=>[r.roomId,r.students,r.openings,r.submitted,r.expected,r.percent]),[['รวม',d.totalStudents,d.totalOpenings,d.submitted,d.expected,d.percent]]);
+      download('สรุปการส่งงาน_'+d.academicYear+'-'+d.semester+'.csv',toCSV(rows),'text/csv;charset=utf-8'); };
+    $('#dpdf').onclick=()=>A.pdf?A.pdf('summary'):toast('ฟังก์ชัน PDF ยังไม่ถูกเพิ่ม',true);
+  });
+};
+
+/* ----- หน้า 2 เปิดรับงาน ----- */
+A.V.open=async()=>{
+  const [lib,rooms]=await Promise.all([api('listAssignments'),api('listRooms')]);
+  let sel=new Set();
+  view(`<h1 style="margin-bottom:12px">เปิดรับงาน</h1><div class="card" style="margin-bottom:16px"><h3 style="margin-bottom:8px">สร้าง / เลือกงาน</h3>
+    ${F('oa','เลือกจากคลังงาน',`<select class="inp" id="oa"><option value="">+ สร้างงานใหม่</option>${lib.map(a=>`<option value="${esc(a.assignmentId)}">${esc(a.title)} (${esc(a.subject)})</option>`).join('')}</select>`)}
+    <div class="grid two">${F('ot','ชื่องาน',inp('ot','text','maxlength="120"'))}${F('os','วิชา',inp('os','text','maxlength="60"'))}</div>
+    ${F('od','คำอธิบาย',`<textarea class="inp" id="od" maxlength="1000"></textarea>`)}
+    <div class="field"><label>ห้องที่เปิดรับ (เลือกได้หลายห้อง)</label><div class="chips" id="orooms">${rooms.map(r=>`<button class="chip" data-r="${esc(r.roomId)}">${esc(r.roomId)}</button>`).join('')||'<span class="muted">ยังไม่มีห้อง (เพิ่มที่หน้าห้องเรียน/ตั้งค่า)</span>'}</div></div>
+    <div class="grid two">${F('om','คะแนนเต็ม',inp('om','number','min="1" value="10" inputmode="decimal"'))}${F('odl','กำหนดส่ง',inp('odl','datetime-local','value="'+toLocalInput()+'"'))}</div>
+    <button class="btn primary block" id="ogo">เปิดรับงาน</button></div><h2 style="margin-bottom:8px">งานที่เปิดอยู่</h2><div id="ol">${skeleton(2)}</div>`);
+  $('#oa').onchange=e=>{ const a=lib.find(x=>x.assignmentId===e.target.value)||{title:'',subject:'',description:''}; $('#ot').value=a.title; $('#os').value=a.subject; $('#od').value=a.description; };
+  $('#orooms').onclick=e=>{ const b=e.target.closest('.chip'); if(!b) return; b.classList.toggle('on'); b.classList.contains('on')?sel.add(b.dataset.r):sel.delete(b.dataset.r); };
+  const g=$('#ogo'); g.onclick=()=>busy(g,async()=>{
+    if(!sel.size) throw new Error('กรุณาเลือกห้องอย่างน้อย 1 ห้อง'); if(!$('#odl').value) throw new Error('กรุณาระบุกำหนดส่ง');
+    const sv=await api('saveAssignment',{assignmentId:$('#oa').value,title:$('#ot').value,subject:$('#os').value,description:$('#od').value});
+    const r=await api('openAssignment',{assignmentId:sv.assignmentId,roomIds:[...sel],maxScore:$('#om').value,deadline:fromLocalInput($('#odl').value)});
+    wr(); toast('เปิดรับงานห้อง '+r.opened.join(', ')+(r.skipped.length?' (ข้ามห้องที่เปิดแล้ว: '+r.skipped.join(', ')+')':'')); A.go('open'); });
+  await swr('listOpenings',{},d=>{ if(tab!=='open'||!$('#ol')) return; drawOpenings(d); });
+};
+function drawOpenings(d){
+  $('#ol').innerHTML=d.length?`<div class="grid">${d.map(o=>{ const p=o.total?Math.round(o.submitted/o.total*100):0, c=countdown(o.deadline);
+    return `<div class="card"><div class="row"><h3 class="sp">${esc(o.title)}</h3><span class="badge ${o.isOpen?'s-submitted':'s-pending'}">${o.isOpen?'เปิดรับ':'ปิดรับ'}</span></div>
+      <p class="muted small">ห้อง ${esc(o.roomId)} · ${esc(o.subject)} · เต็ม ${o.maxScore}</p><p class="small">ส่งภายใน ${fmtDate(o.deadline)} <span class="badge ${c.late?'s-overdue':'s-cream'}">${c.text}</span></p>
+      <div class="bar" style="margin:8px 0"><i style="width:${p}%"></i></div><p class="small">ส่งแล้ว <b>${o.submitted}/${o.total}</b> · ตรวจแล้ว ${o.graded}</p>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-a="grade" data-id="${o.openingId}">ตรวจงาน</button><button class="btn sm" data-a="track" data-id="${o.openingId}">ติดตามคนค้างส่ง</button>
+      <button class="btn sm" data-a="ext" data-id="${o.openingId}">ขยายเวลา</button><button class="btn sm ${o.isOpen?'danger':''}" data-a="tog" data-id="${o.openingId}">${o.isOpen?'ปิดรับ':'เปิดรับใหม่'}</button></div></div>`; }).join('')}</div>`
+    :empty('send','ยังไม่มีงานที่เปิดรับ','สร้างงานด้านบนแล้วกด "เปิดรับงาน"');
+  $$('#ol [data-a]').forEach(b=>b.onclick=()=>{ const o=d.find(x=>x.openingId===b.dataset.id), a=b.dataset.a;
+    if(a==='grade') A.grade(o.openingId); else if(a==='track') track(o); else if(a==='ext') extend(o);
+    else busy(b,async()=>{ await api('updateOpening',{openingId:o.openingId,isOpen:!o.isOpen}); wr(); toast(o.isOpen?'ปิดรับงานแล้ว':'เปิดรับงานอีกครั้ง'); A.go('open'); }); });
+}
+async function track(o){
+  const m=modal(`<h2>คนค้างส่ง · ${esc(o.title)}</h2><p class="muted small">ห้อง ${esc(o.roomId)}</p><div id="tk">${skeleton(2)}</div><button class="btn block" onclick="closeModal()">ปิด</button>`);
+  try{ const l=await api('getTracking',{openingId:o.openingId});
+    $('#tk',m).innerHTML=l.length?`<div class="grid" style="margin:8px 0">${l.map(s=>`<div class="row">${avatar(s.photoThumb,s.nickname,'sm')}<span>เลขที่ ${esc(s.number)} · ${esc(s.nickname)} (${esc(s.firstName)} ${esc(s.lastName)})</span></div>`).join('')}</div>
+      <button class="btn block" id="tcp" style="margin-bottom:8px">คัดลอกรายชื่อ</button>`:empty('check','ส่งครบทุกคนแล้ว');
+    const cp=$('#tcp',m); if(cp) cp.onclick=async()=>{ try{ await navigator.clipboard.writeText('ค้างส่ง '+o.title+' ห้อง '+o.roomId+'\n'+l.map(s=>s.number+'. '+s.nickname+' '+s.firstName+' '+s.lastName).join('\n')); toast('คัดลอกแล้ว'); }catch(e){ toast('คัดลอกไม่ได้',true); } };
+  }catch(e){ $('#tk',m).innerHTML=`<p class="muted">${esc(e.message)}</p>`; }
+}
+function extend(o){
+  const m=modal(`<h2>ขยายเวลา</h2><p class="muted small">${esc(o.title)} · ห้อง ${esc(o.roomId)}</p>${F('xd','กำหนดส่งใหม่',inp('xd','datetime-local','value="'+toLocalInput(o.deadline)+'"'))}
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="xx">ยกเลิก</button><button class="btn primary" id="xs">บันทึก</button></div>`);
+  $('#xx',m).onclick=closeModal; const b=$('#xs',m);
+  b.onclick=()=>busy(b,async()=>{ await api('updateOpening',{openingId:o.openingId,deadline:fromLocalInput($('#xd',m).value)}); closeModal(); wr(); toast('ขยายเวลาแล้ว'); A.go('open'); });
+}
+
+/* ----- หน้าตรวจงาน (กด "บันทึกและถัดไป" ได้รวดเร็ว) ----- */
+A.grade=async function(openingId,startIdx=0,backTo='open'){
+  view(skeleton(3)); let d; try{ d=await api('getOpeningSubmissions',{openingId}); }catch(e){ toast(e.message,true); return A.go(backTo); }
+  const L=d.submissions,o=d.opening; let i=Math.min(startIdx,Math.max(0,L.length-1));
+  const back=()=>A.go(backTo);
+  if(!L.length){ view(`<button class="btn" id="gb">${ic('x')} กลับ</button>${empty('inbox','ยังไม่มีใครส่งงานนี้')}`); $('#gb').onclick=back; return; }
+  const show=()=>{ const s=L[i],st=s.student;
+    view(`<div class="row" style="margin-bottom:10px"><button class="btn sm" id="gb">${ic('x')} กลับ</button><h2 class="sp">${esc(o.title)} · ห้อง ${esc(o.roomId)}</h2><span class="muted">${i+1}/${L.length}</span></div>
+      <div class="cols"><section class="card"><div class="row" style="margin-bottom:8px">${avatar(st.photoThumb,st.nickname)}<div><h3>${esc(st.nickname)} (${esc(st.firstName)} ${esc(st.lastName)})</h3>
+        <p class="muted small">เลขที่ ${esc(st.number)} · ส่ง ${fmtDate(s.submittedAt)} ${s.isLate?'<span class="badge s-overdue">ส่งช้า</span>':''} ${s.status==='graded'?'<span class="badge s-graded">ตรวจแล้ว</span>':''}</p></div></div>
+        ${s.note?`<p class="small" style="white-space:pre-wrap"><b>หมายเหตุ:</b> ${esc(s.note)}</p>`:''}<div id="gi">${s.fileCount?skeleton(1):'<p class="muted">ไม่มีรูป (ส่งเฉพาะหมายเหตุ)</p>'}</div></section>
+      <section class="card"><h3 style="margin-bottom:8px">ให้คะแนน (เต็ม ${o.maxScore})</h3>${F('gs','คะแนน',inp('gs','number','min="0" max="'+o.maxScore+'" step="any" inputmode="decimal" value="'+(s.score==null?'':s.score)+'"'))}
+        ${F('gc','ความเห็นจากครู',`<textarea class="inp" id="gc" maxlength="500">${esc(s.comment||'')}</textarea>`)}
+        <div class="row"><button class="btn" id="gp" ${i===0?'disabled':''}>ก่อนหน้า</button><button class="btn" id="gn" ${i===L.length-1?'disabled':''}>ข้าม</button><button class="btn primary sp" id="gs2">บันทึกและถัดไป</button></div></section></div>`);
+    $('#gb').onclick=back; $('#gp').onclick=()=>{ i--; show(); }; $('#gn').onclick=()=>{ i++; show(); };
+    const box=$('#gi'); if(s.fileCount){ box.innerHTML=''; const cur=i;
+      for(let k=0;k<s.fileCount;k++){ const im=document.createElement('img'); im.className='photo'; im.alt='รูปที่ '+(k+1); im.style.minHeight='60px'; box.appendChild(im);
+        privateImg('submission',s.submissionId,k).then(u=>{ if(cur===i) im.src=u; }).catch(e=>{ im.remove(); }); } }
+    const sv=$('#gs2'); sv.onclick=()=>busy(sv,async()=>{ const v=$('#gs').value;
+      if(v===''||isNaN(+v)||+v<0||+v>o.maxScore) throw new Error('คะแนนต้องอยู่ระหว่าง 0 ถึง '+o.maxScore);
+      await api('gradeSubmission',{submissionId:s.submissionId,score:+v,comment:$('#gc').value}); s.score=+v; s.comment=$('#gc').value; s.status='graded'; wr();
+      if(i<L.length-1){ i++; toast('บันทึกแล้ว'); show(); } else { toast('ตรวจครบทุกคนแล้ว'); back(); } }); };
+  show();
+};
+})();
+
+/* ============================================================
+   ADMIN (ส่วน B): ห้องเรียน/นักเรียน, ตั้งค่า, ส่งออก CSV/PDF
+   ============================================================ */
+(function(){
+const A=App.admin, F=A.F, inp=A.inp, V=A.V, wr=()=>clearCache();
+A.room=''; A.q=''; A.sort='num';
+const chipRow=(items,sel)=>items.map(x=>`<button class="chip ${sel(x)?'on':''}" data-v="${esc(x)}">${esc(x)}</button>`).join('');
+const pdone=(arr,k)=>arr.filter(k).length;
+
+/* ---------- ส่งออก PDF (html2canvas -> jsPDF) / สำรอง window.print() ---------- */
+const pst=document.createElement('style');
+pst.textContent='@media print{body.printing>*:not(#printArea){display:none!important}#printArea{display:block!important;position:static!important}}';
+document.head.appendChild(pst);
+async function pdfFromHtml(html,filename){
+  const box=document.createElement('div'); box.className='report-a4'; box.style.cssText='position:fixed;left:-10000px;top:0'; box.innerHTML=html; document.body.appendChild(box);
+  try{
+    if(!window.html2canvas||!window.jspdf) throw new Error('lib');
+    try{ await document.fonts.ready; }catch(e){}
+    const cv=await html2canvas(box,{scale:2,backgroundColor:'#fff'}), pdf=new window.jspdf.jsPDF('p','mm','a4');
+    const pw=210, ph=297, pageH=Math.floor(cv.width*ph/pw);
+    for(let y=0,n=0;y<cv.height;y+=pageH,n++){
+      const sl=document.createElement('canvas'); sl.width=cv.width; sl.height=Math.min(pageH,cv.height-y);
+      sl.getContext('2d').drawImage(cv,0,y,cv.width,sl.height,0,0,cv.width,sl.height);
+      if(n) pdf.addPage(); pdf.addImage(sl.toDataURL('image/jpeg',.92),'JPEG',0,0,pw,sl.height*pw/cv.width);
+    }
+    pdf.save(filename+'.pdf'); box.remove();
+  }catch(e){   // สำรอง: พิมพ์/บันทึกเป็น PDF ผ่านเบราว์เซอร์
+    box.remove(); toast('สร้าง PDF ตรง ๆ ไม่ได้ ใช้หน้าต่างพิมพ์แทน'); const pa=document.createElement('div'); pa.id='printArea'; pa.className='report-a4'; pa.style.display='none'; pa.innerHTML=html;
+    document.body.appendChild(pa); document.body.classList.add('printing'); setTimeout(()=>{ window.print(); document.body.classList.remove('printing'); pa.remove(); },150);
+  }
+}
+const tbl=(head,rows)=>`<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>${head.map(h=>`<th style="border:1px solid #999;padding:4px 6px;background:#e8eef9">${esc(h)}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td style="border:1px solid #bbb;padding:4px 6px">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+const head=(t,sub)=>`<h2 style="margin:0">${esc((App.info&&App.info.schoolName)||'')}</h2><h3 style="margin:2px 0 4px">${esc(t)}</h3><p style="margin:0 0 12px;color:#555">${esc(sub)} · พิมพ์เมื่อ ${esc(fmtDate(new Date().toISOString()))}</p>`;
+A.pdf=async function(kind){
+  if(kind==='summary'){ const d=A.dash; if(!d) return;
+    return pdfFromHtml(head('รายงานสรุปการส่งงาน','ปีการศึกษา '+d.academicYear+' ภาคเรียน '+d.semester)
+      +`<p>นักเรียน ${d.totalStudents} คน · งานที่สั่ง ${d.totalAssignments} งาน · อัตราส่งรวม <b>${d.percent}%</b></p>`
+      +tbl(['ห้อง','นักเรียน','งานที่เปิด','ส่งแล้ว','ที่ควรส่ง','อัตราส่ง %'],d.rooms.map(r=>[r.roomId,r.students,r.openings,r.submitted,r.expected,r.percent])),'สรุปการส่งงาน'); }
+};
+async function exportRoom(kind){
+  const r=await api('getRoomReport',{roomId:A.room}), ops=r.openings, cell=c=>!c?'-':c.score!==null?c.score:(c.isLate?'ส่งช้า':'ส่งแล้ว');
+  if(kind==='csv'){
+    const rows=[['ห้อง '+r.roomId,'ปีการศึกษา '+r.academicYear+'/'+r.semester],['เลขที่','รหัส','ชื่อ','นามสกุล','ชื่อเล่น'].concat(ops.map(o=>o.title+' (เต็ม '+o.maxScore+')'),['ส่งแล้ว','% ส่ง','คะแนนรวม','คะแนนเต็มที่ตรวจ'])]
+      .concat(r.students.map(s=>[s.number,s.studentId,s.firstName,s.lastName,s.nickname].concat(ops.map(o=>cell(s.cells[o.openingId])),[s.submitted+'/'+ops.length,s.percent,s.totalScore,s.totalMax])));
+    download('คะแนนห้อง_'+r.roomId.replace('/','-')+'.csv',toCSV(rows),'text/csv;charset=utf-8');
+  }else{
+    pdfFromHtml(head('รายงานคะแนนและการส่งงาน ห้อง '+r.roomId,'ปีการศึกษา '+r.academicYear+' ภาคเรียน '+r.semester)
+      +tbl(['เลขที่','ชื่อ-สกุล'].concat(ops.map((o,i)=>'งาน'+(i+1)),['ส่ง','รวม']),r.students.map(s=>[s.number,s.firstName+' '+s.lastName].concat(ops.map(o=>cell(s.cells[o.openingId])),[s.submitted+'/'+ops.length,s.totalScore+'/'+s.totalMax])))
+      +`<p style="margin-top:10px;font-size:12px">${ops.map((o,i)=>'งาน'+(i+1)+' = '+esc(o.title)+' ('+esc(o.subject)+', เต็ม '+o.maxScore+')').join('<br>')}</p>`,'คะแนนห้อง_'+r.roomId.replace('/','-'));
+  }
+}
+
+/* ---------- หน้า 3 จัดการห้องเรียน ---------- */
+V.rooms=async()=>{
+  const rooms=await api('listRooms'); if(!rooms.length) return view(empty('door','ยังไม่มีห้องเรียน','เพิ่มห้องได้ที่หน้าตั้งค่า'));
+  if(!rooms.some(r=>r.roomId===A.room)) A.room=rooms[0].roomId;
+  view(`<h1 style="margin-bottom:12px">จัดการห้องเรียน</h1><div class="chips" id="rc" style="margin-bottom:12px">${chipRow(rooms.map(r=>r.roomId),x=>x===A.room)}</div>
+    <div class="row no-print" style="margin-bottom:12px"><input class="inp" id="rq" type="search" placeholder="ค้นหาชื่อ/เลขที่" style="flex:1;min-width:140px" value="${esc(A.q)}">
+    <select class="inp" id="rs" style="width:auto"><option value="num">เรียงเลขที่</option><option value="name" ${A.sort==='name'?'selected':''}>เรียงชื่อ</option></select>
+    <button class="btn sm" id="rcsv">${ic('download')} Excel/CSV</button><button class="btn sm" id="rpdf">${ic('download')} PDF</button></div><div id="sl">${skeleton(3)}</div>`);
+  $('#rc').onclick=e=>{ const b=e.target.closest('.chip'); if(b){ A.room=b.dataset.v; A.go('rooms'); } };
+  $('#rq').oninput=e=>{ A.q=e.target.value; draw(); }; $('#rs').onchange=e=>{ A.sort=e.target.value; draw(); };
+  $('#rcsv').onclick=e=>busy(e.currentTarget,()=>exportRoom('csv')); $('#rpdf').onclick=e=>busy(e.currentTarget,()=>exportRoom('pdf'));
+  let data=[]; const draw=()=>{ if(!$('#sl')) return; const q=A.q.trim().toLowerCase();
+    const l=data.filter(s=>!q||(s.nickname+s.firstName+s.lastName+s.number+s.studentId).toLowerCase().includes(q))
+      .sort((a,b)=>A.sort==='num'?a.number-b.number:(a.firstName+a.lastName).localeCompare(b.firstName+b.lastName,'th'));
+    $('#sl').innerHTML=l.length?`<div class="grid">${l.map(s=>`<div class="card click" data-s="${esc(s.studentId)}"><div class="row">${avatar(s.photoThumb,s.nickname)}<div class="sp"><h3>${esc(s.nickname)}</h3>
+      <p class="small">${esc(s.firstName)} ${esc(s.lastName)}</p><p class="muted small">เลขที่ ${esc(s.number)} ${s.status!=='active'?'<span class="badge s-pending">ปิดใช้งาน</span>':''}</p></div></div>
+      <div class="bar" style="margin:8px 0"><i style="width:${s.percent}%"></i></div><p class="small">ส่งงาน <b>${s.percent}%</b> (${s.submitted}/${s.total})</p></div>`).join('')}</div>`:empty('users','ไม่พบนักเรียน','ยังไม่มีนักเรียนสมัครในห้องนี้');
+    $$('[data-s]',$('#sl')).forEach(c=>c.onclick=()=>A.student(c.dataset.s)); };
+  await swr('listStudents',{roomId:A.room},d=>{ if(A.tab()!=='rooms') return; data=d; draw(); });
+};
+
+/* ---------- รายบุคคล ---------- */
+A.student=async function(id){
+  view(skeleton(3)); let d; try{ d=await api('getStudentDetail',{studentId:id}); }catch(e){ toast(e.message,true); return A.go('rooms'); }
+  const s=d.student, st=d.stats, back=()=>A.go('rooms');
+  view(`<button class="btn sm" id="sb" style="margin-bottom:12px">${ic('x')} กลับ</button><div class="card row" style="margin-bottom:12px">${avatar(s.photoThumb,s.nickname)}
+    <div class="sp"><h2>${esc(s.nickname)} · ${esc(s.firstName)} ${esc(s.lastName)}</h2><p class="muted small">รหัส ${esc(s.studentId)} · ห้อง ${esc(s.roomId)} เลขที่ ${esc(s.number)} ${s.status!=='active'?'<span class="badge s-pending">ปิดใช้งาน</span>':''}</p>
+    <p class="muted small">สมัคร ${fmtDate(s.createdAt,false)} · เข้าล่าสุด ${fmtDate(s.lastLogin)}</p></div></div>
+    <div class="grid two" style="margin-bottom:12px"><div class="stat s-submitted"><b>${st.submitted}/${st.total}</b>ส่งแล้ว (${st.percent}%)</div><div class="stat s-graded"><b>${st.avgPercent==null?'-':st.avgPercent+'%'}</b>คะแนนเฉลี่ย</div>
+    <div class="stat s-pending"><b>${st.pending}</b>ค้างส่ง</div><div class="stat s-overdue"><b>${st.overdue}</b>เลยกำหนด</div></div>
+    <div class="row" style="margin-bottom:14px"><button class="btn sm" id="se">${ic('edit')} แก้ไขข้อมูล</button><button class="btn sm" id="sm">ย้ายห้อง</button><button class="btn sm" id="sp">รีเซ็ต PIN</button>
+    <button class="btn sm" id="st">${s.status==='active'?'ปิดใช้งาน':'เปิดใช้งาน'}</button><button class="btn sm danger" id="sd">${ic('trash')} ลบ</button></div>
+    <h2 style="margin-bottom:8px">ประวัติส่งงาน</h2>${d.history.length?`<div class="grid">${d.history.map((h,i)=>{ const x=h.submission;
+    return `<div class="card"><div class="row"><h3 class="sp">${esc(h.title)}</h3>${x?(x.status==='graded'?'<span class="badge s-graded">ตรวจแล้ว</span>':x.isLate?'<span class="badge s-overdue">ส่งช้า</span>':'<span class="badge s-submitted">ส่งแล้ว</span>'):'<span class="badge s-pending">ยังไม่ส่ง</span>'}</div>
+    <p class="muted small">${esc(h.subject)} · กำหนด ${fmtDate(h.deadline)}</p>${x&&x.status==='graded'?`<p>คะแนน <b>${x.score}/${h.maxScore}</b></p>`:''}
+    ${x?`<button class="btn sm" data-g="${i}" style="margin-top:6px">${x.status==='graded'?'แก้คะแนน':'ให้คะแนน'}</button>`:''}</div>`; }).join('')}</div>`:empty('inbox','ยังไม่มีงานในห้องนี้')}`);
+  $('#sb').onclick=back;
+  const act=(sel,fn)=>{ $(sel).onclick=()=>fn($(sel)); }, done=msg=>{ wr(); toast(msg); A.student(id); };
+  act('#se',()=>{ const m=modal(`<h2>แก้ไขข้อมูล</h2><div class="grid two">${F('ef','ชื่อ',inp('ef','text','value="'+esc(s.firstName)+'"'))}${F('el','นามสกุล',inp('el','text','value="'+esc(s.lastName)+'"'))}</div>
+    ${F('en','ชื่อเล่น',inp('en','text','value="'+esc(s.nickname)+'"'))}${F('eu','เลขที่',inp('eu','number','min="1" max="99" value="'+esc(s.number)+'"'))}
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="ex">ยกเลิก</button><button class="btn primary" id="es">บันทึก</button></div>`);
+    $('#ex',m).onclick=closeModal; const b=$('#es',m); b.onclick=()=>busy(b,async()=>{ await api('updateStudent',{studentId:id,firstName:$('#ef',m).value,lastName:$('#el',m).value,nickname:$('#en',m).value,number:$('#eu',m).value}); closeModal(); done('บันทึกแล้ว'); }); });
+  act('#sm',async()=>{ const rs=await api('listRooms'); const m=modal(`<h2>ย้ายห้อง</h2>${F('mr','ห้องใหม่',`<select class="inp" id="mr">${rs.map(r=>`<option ${r.roomId===s.roomId?'selected':''}>${esc(r.roomId)}</option>`).join('')}</select>`)}
+    ${F('mn','เลขที่ในห้องใหม่',inp('mn','number','min="1" max="99" value="'+esc(s.number)+'"'))}<div class="row" style="justify-content:flex-end"><button class="btn" id="mx">ยกเลิก</button><button class="btn primary" id="ms">ย้าย</button></div>`);
+    $('#mx',m).onclick=closeModal; const b=$('#ms',m); b.onclick=()=>busy(b,async()=>{ await api('moveStudent',{studentId:id,roomId:$('#mr',m).value,number:$('#mn',m).value}); closeModal(); A.room=$('#mr',m)?A.room:A.room; done('ย้ายห้องแล้ว'); }); });
+  act('#sp',async()=>{ if(!await confirmBox('รีเซ็ต PIN','ระบบจะสุ่ม PIN ใหม่ 4 หลักให้นักเรียนคนนี้','รีเซ็ต')) return;
+    try{ const r=await api('resetPin',{studentId:id}); modal(`<h2>PIN ใหม่</h2><p class="center" style="font-size:2.4rem;letter-spacing:.3em;font-weight:600">${esc(r.newPin)}</p><p class="muted small center">แจ้งนักเรียนแล้วให้เปลี่ยน PIN ในเมนูโปรไฟล์</p><button class="btn primary block" onclick="closeModal()">ปิด</button>`); }catch(e){ toast(e.message,true); } });
+  act('#st',async()=>{ try{ await api('setStudentStatus',{studentId:id,status:s.status==='active'?'disabled':'active'}); done('อัปเดตสถานะแล้ว'); }catch(e){ toast(e.message,true); } });
+  act('#sd',async()=>{ if(!await confirmBox('ลบนักเรียน','ลบบัญชีพร้อมงานที่ส่งและรูปทั้งหมด กู้คืนไม่ได้','ลบถาวร',true)) return;
+    try{ await api('deleteStudent',{studentId:id}); wr(); toast('ลบแล้ว'); back(); }catch(e){ toast(e.message,true); } });
+  $$('[data-g]').forEach(b=>b.onclick=()=>{ const h=d.history[+b.dataset.g], x=h.submission;
+    const m=modal(`<h2>${esc(h.title)}</h2><p class="muted small">คะแนนเต็ม ${h.maxScore}</p>${F('gs','คะแนน',inp('gs','number','min="0" max="'+h.maxScore+'" step="any" value="'+(x.score==null?'':x.score)+'"'))}
+      ${F('gc','ความเห็น',`<textarea class="inp" id="gc" maxlength="500"></textarea>`)}<div class="row" style="justify-content:flex-end"><button class="btn" id="gx">ยกเลิก</button><button class="btn primary" id="gk">บันทึก</button></div>`);
+    $('#gx',m).onclick=closeModal; const k=$('#gk',m);
+    k.onclick=()=>busy(k,async()=>{ const v=$('#gs',m).value; if(v===''||+v<0||+v>h.maxScore) throw new Error('คะแนนต้องอยู่ระหว่าง 0 ถึง '+h.maxScore);
+      await api('gradeSubmission',{submissionId:x.submissionId,score:+v,comment:$('#gc',m).value}); closeModal(); done('บันทึกคะแนนแล้ว'); }); });
+};
+
+/* ---------- หน้า 4 ตั้งค่า ---------- */
+const sec=(t,h)=>`<section class="card" style="margin-bottom:14px"><h2 style="margin-bottom:10px">${t}</h2>${h}</section>`;
+const roomLink=r=>location.origin+location.pathname+'?room='+encodeURIComponent(r);
+V.set=async()=>{
+  const [cfg,rooms,anns,links]=await Promise.all([api('getSettings'),api('listRooms'),api('listAnnouncements'),api('listLinks')]);
+  const dark=document.documentElement.dataset.theme==='dark'; let linkRoom=(rooms.find(r=>r.isOpen)||rooms[0]||{}).roomId||'';
+  view(`<h1 style="margin-bottom:12px">ตั้งค่า</h1>
+  ${sec('ข้อมูลทั่วไป',`${F('cn','ชื่อโรงเรียน',inp('cn','text','maxlength="100" value="'+esc(cfg.schoolName)+'"'))}<div class="grid two">${F('cy','ปีการศึกษา',inp('cy','text','maxlength="4" inputmode="numeric" value="'+esc(cfg.academicYear)+'"'))}${F('cs','ภาคเรียน',inp('cs','text','maxlength="1" inputmode="numeric" value="'+esc(cfg.semester)+'"'))}</div><button class="btn primary" id="csave">บันทึก</button>`)}
+  ${sec('ห้องเรียน',`<div class="grid" id="rl">${rooms.map(r=>`<div class="row card"><b class="sp">ห้อง ${esc(r.roomId)} <span class="muted small">(${r.students} คน)</span></b><button class="chip ${r.isOpen?'on':''}" data-rt="${esc(r.roomId)}" data-o="${r.isOpen?1:0}">${r.isOpen?'เปิดสมัคร':'ปิดสมัคร'}</button></div>`).join('')}</div>
+    <div class="row" style="margin-top:10px"><input class="inp" id="nr" placeholder="เพิ่มห้อง เช่น 2/4" style="flex:1;min-width:140px"><button class="btn" id="nra">${ic('plus')} เพิ่มห้อง</button></div>
+    ${rooms.length?`<div style="margin-top:14px"><label for="lr" class="small"><b>ลิงก์สมัครเฉพาะห้อง</b></label><select class="inp" id="lr">${rooms.map(r=>`<option ${r.roomId===linkRoom?'selected':''}>${esc(r.roomId)}</option>`).join('')}</select>
+    <div class="row" style="margin-top:8px"><input class="inp" id="lk" readonly style="flex:1;min-width:160px"><button class="btn" id="lcp">คัดลอกลิงก์สมัครของห้องนี้</button></div><div id="qr" style="background:#fff;padding:10px;border-radius:12px;display:inline-block;margin-top:10px"></div></div>`:''}`)}
+  ${sec('ประกาศ',`<button class="btn" id="an" style="margin-bottom:10px">${ic('plus')} สร้างประกาศ</button><div class="grid">${anns.map(a=>`<div class="card"><div class="row"><h3 class="sp">${esc(a.title)}</h3>${a.pinned?'<span class="badge s-lav">ปักหมุด</span>':''}</div>
+    <p class="small" style="white-space:pre-wrap">${esc(a.body)}</p><p class="muted small">ถึง: ${a.roomId==='all'?'ทุกห้อง':'ห้อง '+esc(a.roomId)} · หมดอายุ: ${a.expiresAt?fmtDate(a.expiresAt):'ไม่กำหนด'}</p>
+    <div class="row"><button class="btn sm" data-ae="${esc(a.id)}">แก้ไข</button><button class="btn sm danger" data-ad="${esc(a.id)}">ลบ</button></div></div>`).join('')||'<p class="muted">ยังไม่มีประกาศ</p>'}</div>`)}
+  ${sec('ลิงก์ภายนอก',`<button class="btn" id="ln" style="margin-bottom:10px">${ic('plus')} เพิ่มลิงก์</button><div class="grid">${links.map((l,i)=>`<div class="card row">${ic(ICONS[l.icon]?l.icon:'link')}<div class="sp"><b>${esc(l.title)}</b><p class="muted small" style="word-break:break-all">${esc(l.url)}</p></div>
+    <button class="btn sm" data-lu="${i}" aria-label="เลื่อนขึ้น">${ic('up')}</button><button class="btn sm" data-ld="${i}" aria-label="เลื่อนลง">${ic('down')}</button><button class="btn sm" data-le="${i}">${ic('edit')}</button><button class="btn sm danger" data-lx="${i}">${ic('trash')}</button></div>`).join('')||'<p class="muted">ยังไม่มีลิงก์</p>'}</div>`)}
+  ${sec('ความปลอดภัยและธีม',`<div class="row"><button class="btn" id="pw">${ic('shield')} เปลี่ยนรหัสผ่านแอดมิน</button><button class="btn" id="th">${ic(dark?'sun':'moon')} โหมด${dark?'สว่าง':'มืด'}</button></div>`)}`);
+  const re=()=>{ wr(); A.go('set'); }, run=(b,fn,msg)=>busy(b,async()=>{ await fn(); if(msg) toast(msg); re(); });
+  $('#csave').onclick=e=>busy(e.currentTarget,async()=>{ const r=await api('saveSettings',{schoolName:$('#cn').value,academicYear:$('#cy').value,semester:$('#cs').value}); App.info.schoolName=r.schoolName; wr(); toast('บันทึกแล้ว'); });
+  $('#rl').onclick=e=>{ const b=e.target.closest('[data-rt]'); if(b) run(b,()=>api('saveRoom',{roomId:b.dataset.rt,isOpen:b.dataset.o!=='1'})); };
+  $('#nra').onclick=e=>run(e.currentTarget,()=>api('saveRoom',{roomId:$('#nr').value.trim(),isOpen:true}),'เพิ่มห้องแล้ว');
+  if($('#lr')){ const upd=()=>{ const u=roomLink($('#lr').value); $('#lk').value=u; $('#qr').innerHTML=''; if(window.QRCode) new QRCode($('#qr'),{text:u,width:180,height:180}); else $('#qr').textContent='(โหลด QR ไม่ได้)'; };
+    $('#lr').onchange=upd; upd(); $('#lcp').onclick=async()=>{ try{ await navigator.clipboard.writeText($('#lk').value); toast('คัดลอกลิงก์แล้ว'); }catch(e){ $('#lk').select(); toast('เลือกลิงก์แล้ว กดคัดลอกเอง'); } }; }
+  const annForm=a=>{ const ed=!!a; a=a||{title:'',body:'',roomId:'all',pinned:false,expiresAt:''}; const sel=new Set([a.roomId]);
+    const m=modal(`<h2>${ed?'แก้ไข':'สร้าง'}ประกาศ</h2>${F('at','หัวข้อ',inp('at','text','maxlength="120" value="'+esc(a.title)+'"'))}${F('ab','ข้อความ',`<textarea class="inp" id="ab" maxlength="2000">${esc(a.body)}</textarea>`)}
+      <div class="field"><label>ส่งถึง</label><div class="chips" id="ar">${['all'].concat(rooms.map(r=>r.roomId)).map(r=>`<button class="chip ${sel.has(r)?'on':''}" data-v="${esc(r)}">${r==='all'?'ทุกห้อง':esc(r)}</button>`).join('')}</div></div>
+      <label class="row" style="min-height:44px"><input type="checkbox" id="ap" ${a.pinned?'checked':''} style="width:22px;height:22px"> ปักหมุด</label>${F('ae','หมดอายุ (เว้นว่าง = ไม่หมด)',inp('ae','datetime-local','value="'+(a.expiresAt?toLocalInput(a.expiresAt):'')+'"'))}
+      <div class="row" style="justify-content:flex-end"><button class="btn" id="ax">ยกเลิก</button><button class="btn primary" id="as">บันทึก</button></div>`);
+    $('#ar',m).onclick=e=>{ const b=e.target.closest('.chip'); if(!b) return; const v=b.dataset.v;
+      if(ed){ sel.clear(); sel.add(v); } else if(v==='all'){ sel.clear(); sel.add('all'); } else { sel.delete('all'); sel.has(v)?sel.delete(v):sel.add(v); if(!sel.size) sel.add('all'); }
+      $$('.chip',m).forEach(c=>c.classList.toggle('on',sel.has(c.dataset.v))); };
+    $('#ax',m).onclick=closeModal; const b=$('#as',m);
+    b.onclick=()=>busy(b,async()=>{ const ex=$('#ae',m).value; await api('saveAnnouncement',{id:ed?a.id:undefined,title:$('#at',m).value,body:$('#ab',m).value,roomId:[...sel][0],roomIds:[...sel],pinned:$('#ap',m).checked,expiresAt:ex?fromLocalInput(ex):''}); closeModal(); toast('บันทึกประกาศแล้ว'); re(); }); };
+  $('#an').onclick=()=>annForm(); $$('[data-ae]').forEach(b=>b.onclick=()=>annForm(anns.find(a=>a.id===b.dataset.ae)));
+  $$('[data-ad]').forEach(b=>b.onclick=async()=>{ if(await confirmBox('ลบประกาศ','ลบแล้วกู้คืนไม่ได้','ลบ',true)) run(b,()=>api('deleteAnnouncement',{id:b.dataset.ad}),'ลบแล้ว'); });
+  const linkForm=l=>{ const ed=!!l; l=l||{title:'',url:'https://',icon:'link'};
+    const m=modal(`<h2>${ed?'แก้ไข':'เพิ่ม'}ลิงก์</h2>${F('lt','ชื่อ',inp('lt','text','maxlength="80" value="'+esc(l.title)+'"'))}${F('lu','URL',inp('lu','url','value="'+esc(l.url)+'"'))}
+      ${F('li','ไอคอน',`<select class="inp" id="li">${['link','book','home','users','image','bell','send','grid'].map(k=>`<option ${k===l.icon?'selected':''}>${k}</option>`).join('')}</select>`)}
+      <div class="row" style="justify-content:flex-end"><button class="btn" id="lx2">ยกเลิก</button><button class="btn primary" id="ls">บันทึก</button></div>`);
+    $('#lx2',m).onclick=closeModal; const b=$('#ls',m); b.onclick=()=>busy(b,async()=>{ await api('saveLink',{id:ed?l.id:undefined,title:$('#lt',m).value,url:$('#lu',m).value,icon:$('#li',m).value}); closeModal(); re(); }); };
+  $('#ln').onclick=()=>linkForm(); $$('[data-le]').forEach(b=>b.onclick=()=>linkForm(links[+b.dataset.le]));
+  $$('[data-lx]').forEach(b=>b.onclick=async()=>{ if(await confirmBox('ลบลิงก์','ต้องการลบลิงก์นี้หรือไม่','ลบ',true)) run(b,()=>api('deleteLink',{id:links[+b.dataset.lx].id})); });
+  const mv=(b,i,j)=>{ if(j<0||j>=links.length) return; const ids=links.map(x=>x.id); [ids[i],ids[j]]=[ids[j],ids[i]]; run(b,()=>api('reorderLinks',{ids})); };
+  $$('[data-lu]').forEach(b=>b.onclick=()=>mv(b,+b.dataset.lu,+b.dataset.lu-1)); $$('[data-ld]').forEach(b=>b.onclick=()=>mv(b,+b.dataset.ld,+b.dataset.ld+1));
+  $('#th').onclick=()=>{ toggleTheme(); A.go('set'); };
+  $('#pw').onclick=()=>{ const m=modal(`<h2>เปลี่ยนรหัสผ่านแอดมิน</h2>${F('p0','รหัสผ่านเดิม',inp('p0','password'))}${F('p1','รหัสผ่านใหม่ (6 ตัวขึ้นไป)',inp('p1','password'))}${F('p2','ยืนยันรหัสผ่านใหม่',inp('p2','password'))}
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="px2">ยกเลิก</button><button class="btn primary" id="ps2">บันทึก</button></div>`);
+    $('#px2',m).onclick=closeModal; const b=$('#ps2',m); b.onclick=()=>busy(b,async()=>{ if($('#p1',m).value!==$('#p2',m).value) throw new Error('รหัสผ่านใหม่ไม่ตรงกัน');
+      await api('changeAdminPassword',{oldPassword:$('#p0',m).value,newPassword:$('#p1',m).value}); closeModal(); toast('เปลี่ยนรหัสผ่านแล้ว'); }); };
+};
+})();
+
+
+
+
+/* ---------- Boot ---------- */
+async function boot(){
+  applyTheme(); setupPWA(); initAdminDot();
+  try{ App.info = await api('getPublicInfo',{},{auth:false}); }catch(e){ App.info={schoolName:'',openRooms:[]}; toast(e.message,true); }
+  const adm=sessionStorage.getItem('adm'); if(adm && App.admin.start){ App.token=adm; App.role='admin'; return App.admin.start(); }
+  const has = loadAuth();
+  if(has && App.role==='admin' && App.admin.start) return App.admin.start();
+  if(has && App.role==='student' && App.student.start) return App.student.start();
+  if(App.student.authScreen) return App.student.authScreen();
+  $('#app').innerHTML = `<main>${empty('inbox','ส่วนฝั่งนักเรียนยังไม่ถูกเพิ่ม','วางโค้ดส่วนที่ 2 และ 3 ตามลำดับ')}</main>`;
+}
+document.addEventListener('DOMContentLoaded',boot);
+</script>
+</body>
+</html>
