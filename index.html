@@ -852,7 +852,12 @@ V.set=async()=>{
 /* ---------- Boot ---------- */
 async function boot(){
   applyTheme(); setupPWA(); initAdminDot();
-  try{ App.info = await api('getPublicInfo',{},{auth:false}); }catch(e){ App.info={schoolName:'',openRooms:[]}; toast(e.message,true); }
+  try{ App.info=JSON.parse(localStorage.getItem('info')||'null'); }catch(e){}
+  const refresh=api('getPublicInfo',{},{auth:false}).then(i=>{ App.info=i; try{ localStorage.setItem('info',JSON.stringify(i)); }catch(e){} return i; }).catch(e=>{ if(!App.info) toast(e.message,true); return null; });
+  const hasSession=!!(localStorage.getItem('auth')||sessionStorage.getItem('auth')||sessionStorage.getItem('adm'));
+  if(!App.info && !hasSession) App.info=(await refresh)||{schoolName:'',openRooms:[]};   // เปิดครั้งแรกและยังไม่ล็อกอิน: ต้องรอห้องที่เปิดสมัคร
+  if(!App.info) App.info={schoolName:'',openRooms:[]};
+  refresh.then(i=>{ const sel=$('#rroom'); if(i&&sel){ const cur=sel.value; sel.innerHTML=i.openRooms.map(r=>`<option ${r===cur?'selected':''}>${esc(r)}</option>`).join('')||'<option value="">ยังไม่มีห้องที่เปิดรับสมัคร</option>'; } });  // อัปเดตรายชื่อห้องในฟอร์มสมัครโดยไม่ล้างข้อมูลที่พิมพ์
   const adm=sessionStorage.getItem('adm'); if(adm && App.admin.start){ App.token=adm; App.role='admin'; return App.admin.start(); }
   const has = loadAuth();
   if(has && App.role==='admin' && App.admin.start) return App.admin.start();
